@@ -155,6 +155,15 @@ public class Util {
      * @param msg
      */
     public static void showError(String msg) {
-        Notifications.Bus.notify(new Notification("SHCOU", "Optimize Error", msg, NotificationType.ERROR));
+        Notifications.Bus.notify(new Notification("XHO", "Optimize Error", msg, NotificationType.ERROR));
+    }
+
+    /**
+     * 提示信息
+     *
+     * @param msg
+     */
+    public static void showTip(String msg) {
+        Notifications.Bus.notify(new Notification("XHO", "Optimize Finish", msg, NotificationType.INFORMATION));
     }
 }

@@ -1,49 +1,29 @@
 <idea-plugin>
     <id>com.bauerbao.srchardcodeutil</id>
-    <name>Resources Hard-code Optimize Util</name>
-    <version>0.2</version>
+    <name>XML Hard-code Optimize</name>
+    <version>1.0</version>
     <vendor email="351324046@qq.com" url="https://github.com/bauer-bao/SrcHardCodeOptimizeUtil">Bauer</vendor>
 
     <description><![CDATA[
-    This plugin can generate the resource code in strings.xml and colors.xml automatically after optimizing the hard codes of strings and colors in res folder.<br>
-    Advice: backup your code before use.
-    对老项目中的string和color等硬编码快捷的添加到strings.xml和colors.xml文件中.
-    建议：使用前先备份代码.
+    After optimizing the hard codes of strings and colors in res folder, this plugin can generate the resource codes in strings.xml and colors.xml automatically.<br>
+    Recommendation: backup your code before use.<br>
+    对老项目中的string和color等硬编码快捷的添加到strings.xml和colors.xml文件中.<br>
+    建议：使用前先备份代码.<br>
+
+    More:<br>
+    1.Support res/drawableXXX/layoutXXX folder to execute this plugin.<br>
+    2.Support XXX.xml file to execute this plugin.<br>
+    3.For string option, only the android:text and android:hint attributes can be recognized.<br>
+    4.For color option, the value like #xxx/#xxxxxx/#xxxxxxxx can be recognized.<br>
+    更多：<br>
+    1.支持对res/drawableXXX/layoutXXX文件夹执行插件<br>
+    2.支持对XXX.xml文件执行插件<br>
+    3.如果执行string选项的话，只有android:text和android:hint两个属性可以被识别<br>
+    4.如果执行color选项的话，类似于#xxx/#xxxxxx/#xxxxxxxx的值都可以被识别<br>
     ]]></description>
 
     <change-notes><![CDATA[
-      V1.0: 首次发布工具 Src hard code optimize util.<br>
-
-
-      func: [ok]1.支持string 只考虑text 和 hint-----只支持layout目录
-            [ok]2.支持color 只适配  "#  并且长度为6或者8位。或者可以考虑正则匹配下     drawable & layout文件夹
-            3.对string/color支持添加自定义属性
-            [ok]4.支持对文件夹或者文件操作
-            [ok]5.color 需要可以对res  drawable/layout  单文件执行操作
-
-        bug:
-            [ok]1.目标文件夹不存在，主动创建
-            [ok]2.已存在的，是否可以去重
-            [ok]3.验证码将发送到123****1232，没法处理成功
-            [ok]4.@{questionItem.name} databinding需要过滤
-            [ok]5.没有进度显示（显示的）
-            [ok]6.weight  +1  替换错乱的问题    因为weight为1，但是全部替换的时候，也是为1，因此，全局替换掉了
-            [ok]7.空格需要过滤
-            [ok]8.如果目标value在注释代码中，则有问题，需要判断<!-- -->这种形式
-            [ok]9.color svg过滤   <vector   <group  <path
-            [ok]10.重复文件没有处理
-
-
-
-
-
-
-
-
-
-
-
-
+      V1.0: XML Hard-code Optimize Plugin is the first release version.<br>
     ]]>
     </change-notes>
 
@@ -61,7 +41,7 @@
     </extensions>
 
     <actions>
-        <group id="src-hard-code-optimize" text="Optimize Hard Code" popup="true"
+        <group id="xml-hard-code-optimize" text="Optimize Hard Code" popup="true"
                description="Optimize the hard codes to strings.xml or colors.xml">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
 

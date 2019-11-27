@@ -96,6 +96,7 @@ public class ColorOptimizeAction extends AnAction {
         }
         //刷新整个工程的文件
         e.getActionManager().getAction(IdeActions.ACTION_SYNCHRONIZE).actionPerformed(e);
+        Util.showTip("Optimize finish");
     }
 
     /**

@@ -63,15 +63,17 @@ public class StringOptimizeAction extends AnAction {
             VirtualFile[] children = file.getChildren();
             //遍历子文件，找到需要替换的资源并替换，并且记录到entityList中
             for (VirtualFile child : children) {
-                if (child.isDirectory() && child.getName().startsWith("layout")) {
-                    //孙类，并且是layout
-                    VirtualFile[] children2 = child.getChildren();
-                    for (VirtualFile child2 : children2) {
-                        //说明对res文件夹进行的操作
-                        scanChildFile(child2, sb);
+                if (child.isDirectory()) {
+                    if (child.getName().startsWith("layout")) {
+                        //孙类，并且是layout
+                        VirtualFile[] children2 = child.getChildren();
+                        for (VirtualFile child2 : children2) {
+                            //说明对res文件夹进行的操作
+                            scanChildFile(child2, sb);
+                        }
                     }
                 } else {
-                    //说明对layout进行的操作
+                    //说明对layout的单文件进行的操作
                     scanChildFile(child, sb);
                 }
             }
@@ -123,7 +125,7 @@ public class StringOptimizeAction extends AnAction {
         InputStream is = null;
         try {
             is = file.getInputStream();
-            //获取一个文件中的全部资源列表
+            //获取一个文件中的全部新增的资源列表
             List<Entity> result = extraEntity(is, file.getNameWithoutExtension().toLowerCase(), oldContent);
             //保存到全部文件的资源列表中
             entityList.addAll(result);
@@ -134,10 +136,8 @@ public class StringOptimizeAction extends AnAction {
                         .append(string.getValue())
                         .append("</string>");
             }
-            if (result.size() > 0) {
-                //如果单次有数据，保存到文件，否则表示单次文件没有需要优化的数据，不需要保存
-                Util.saveContentToFile(file.getPath(), oldContent.toString());
-            }
+            //更新文件
+            Util.saveContentToFile(file.getPath(), oldContent.toString());
         } catch (IOException e1) {
             e1.printStackTrace();
         } finally {
@@ -229,10 +229,16 @@ public class StringOptimizeAction extends AnAction {
                     targetId = fileName + "_text_" + (index++);
                     strings.add(new Entity(targetId, value));
                 }
-                //找到目标索引值
-                int index = Util.getRightIndex(oldContent, value, targetItem, 0);
-                //+2 是因为替换的是 "value"，而不是value
-                oldContent = oldContent.replace(index, index + value.length() + 2, "\"@string/" + targetId + "\"");
+                int index = 0;
+                while (index < oldContent.length() && index >= 0) {
+                    index = Util.getRightIndex(oldContent, value, targetItem, 0);
+                    if (index != -1) {
+                        //说明找到对应的值 +2 是因为替换的是 "value"，而不是value
+                        oldContent = oldContent.replace(index, index + value.length() + 2, "\"@string/" + targetId + "\"");
+                        //继续查找下一个值
+                        index += value.length();
+                    }
+                }
             }
         }
         return oldContent;

@@ -89,6 +89,7 @@ public class Util {
      * 弃用方案：
      * 1.如果用node转string的方案，则会改变原文件的原有代码
      * 2.如果直接用String.replace/replaceFirst方法，查找的target可能在目标target前面，从而导致替换混乱
+     * 3.如果使用正则，因为string的内容没法保证，可能存在和正则关键字冲突，工作量大，正则不易维护，最终放弃
      * <p>
      * 实现方案：
      * 1.查找当前value的索引值index
@@ -102,8 +103,8 @@ public class Util {
      */
     public static int getRightIndex(StringBuilder content, String value, String targetItem, int fromIndex) {
         int index = content.indexOf("\"" + value + "\"", fromIndex);
-        if (isRightIndex(content, targetItem, index - 1)) {
-            //正确的index，直接返回
+        if (index == -1 || isRightIndex(content, targetItem, index - 1)) {
+            //没有找到 或者正确的index，直接返回
             return index;
         } else {
             //继续查找下一个合适的index
@@ -144,10 +145,6 @@ public class Util {
                     break;
                 }
             }
-        }
-        if (isRight) {
-            //判断行首或者行尾是否存在<!-- -->，一般行尾的其他字符串偏少，所以此处用行尾判断
-            // TODO: 2019/11/26
         }
         return isRight;
     }

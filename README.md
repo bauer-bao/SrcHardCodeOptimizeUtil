@@ -1,21 +1,23 @@
 # SrcHardCodeOptimizeUtil
-src hard code optimize
 
+##介绍
+对老项目中的string和color等硬编码快捷的添加到strings.xml和colors.xml文件中.
 
-func: [ok]1.支持string 只考虑text 和 hint-----只支持layout目录
-            [ok]2.支持color 只适配  "#  并且长度为6或者8位。或者可以考虑正则匹配下     drawable & layout文件夹
-            3.对string/color支持添加自定义属性
-            [ok]4.支持对文件夹或者文件操作
-            [ok]5.color 需要可以对res  drawable/layout  单文件执行操作
+##效果
+![record1.gif](https://github.com/bauer-bao/SrcHardCodeOptimizeUtil/blob/master/screenshoots/record1.gif)
 
-        bug:
-            [ok]1.目标文件夹不存在，主动创建
-            [ok]2.已存在的，是否可以去重
-            [ok]3.验证码将发送到123****1232，没法处理成功
-            [ok]4.@{questionItem.name} databinding需要过滤
-            [ok]5.没有进度显示（显示的）
-            [ok]6.weight  +1  替换错乱的问题    因为weight为1，但是全部替换的时候，也是为1，因此，全局替换掉了
-            [ok]7.空格需要过滤
-            [ok]8.如果目标value在注释代码中，则有问题，需要判断<!-- -->这种形式
-            [ok]9.color svg过滤   <vector   <group  <path
-            [ok]10.重复文件没有处理
+##下载
+插件市场搜索"XML Hard-code Optimize"
+
+##常见问题
+1.使用前先备份代码
+2.支持对res | drawableXXX/layoutXXX | XXX.xml 执行插件
+3.如果执行string选项的话，只有android:text和android:hint两个属性可以被识别
+4.如果执行color选项的话，类似于#xxx/#xxxxxx/#xxxxxxxx的值都可以被识别
+5.默认只判断values文件夹中的strings.xml/colors.xml，如果不存在，会主动创建
+6.已过滤databinding的样式
+7.colors优化操作已对svg的vector | group | path标签过滤
+8.欢迎在issue中提意见、建议甚至问题
+
+##更新日志
+V1.0: 新建工程

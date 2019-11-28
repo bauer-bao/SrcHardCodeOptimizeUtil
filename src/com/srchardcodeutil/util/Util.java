@@ -88,7 +88,7 @@ public class Util {
      * <p>
      * 弃用方案：
      * 1.如果用node转string的方案，则会改变原文件的原有代码
-     * 2.如果直接用String.replace/replaceFirst方法，查找的target可能在目标target前面，从而导致替换混乱
+     * 2.如果直接用String.replace方法，查找的target可能在目标target前面，从而导致替换混乱
      * 3.如果使用正则，因为string的内容没法保证，可能存在和正则关键字冲突，工作量大，正则不易维护，最终放弃
      * <p>
      * 实现方案：

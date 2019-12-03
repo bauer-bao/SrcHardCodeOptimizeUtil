@@ -45,8 +45,10 @@ public class Util {
         if (parentFile.getName().equalsIgnoreCase("res")) {
             //如果是res资源，则开始处理
             VirtualFile[] resDirChildren = parentFile.getChildren();
+            boolean valuesExist = false;
             for (VirtualFile child : resDirChildren) {
                 if (child.getName().equals("values") && child.isDirectory()) {
+                    valuesExist = true;
                     //找到values目录，因为从layout中拿到的string，肯定只有一种语言，因此只在values中生成一份string.xml，不处理其他values文件夹
                     VirtualFile[] valuesChildren = child.getChildren();
                     //处理values文件夹
@@ -78,6 +80,17 @@ public class Util {
                     }
                     break;
                 }
+            }
+            if (!valuesExist) {
+                //新建value文件夹
+                File valueFile = new File(parentFile.getPath(), "values");
+                valueFile.mkdirs();
+                //新建xml文件
+                File file1 = new File(valueFile.getPath(), isString ? "strings.xml" : "colors.xml");
+                //生成内容
+                String content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n   " + sb.toString() + "\n</resources>";
+                //保存到文件
+                saveContentToFile(file1.getPath(), content);
             }
         }
     }
@@ -147,6 +160,41 @@ public class Util {
             }
         }
         return isRight;
+    }
+
+    /**
+     * 获取value的index
+     * <p>
+     * 以android:text="aaa"为例。因为xml中属性标准写法如上，但是由于开发人员的不规范，=两边可能会有N个空格，需要过滤掉空格，但是:两边一定不会有空格，否则系统直接标红
+     * 实现大概逻辑：对字符串从index开始，不断往后去循环，依次比对是否和 =" 一致，需要过滤空格。如果全部匹配，则符合要求
+     *
+     * @param content
+     * @param index
+     * @return
+     */
+    public static int getValueIndex(String content, int index) {
+        String targetItemStr = "=\"";
+        int targetIndex = 0;
+        int resultIndex = -1;
+        for (int i = index; i < content.length(); i++) {
+            char cur = content.charAt(i);
+            if (cur != ' ') {
+                //不为空格
+                if (cur == targetItemStr.charAt(targetIndex)) {
+                    //继续匹配下一个值
+                    targetIndex++;
+                    if (targetIndex >= targetItemStr.length()) {
+                        //全部匹配完
+                        resultIndex = i + 1;
+                        break;
+                    }
+                } else {
+                    //不一致
+                    break;
+                }
+            }
+        }
+        return resultIndex;
     }
 
     /**

@@ -192,6 +192,12 @@ public class ColorOptimizeAction extends AnAction {
             } else {
                 isFiltered = true;
             }
+        } else if (node.getNodeType() == Node.COMMENT_NODE) {
+            /*
+             * 处理方式和string不同，1.获取value，2.获取：=之间的值作为属性，3.替换
+             */
+            String commentValue = node.getNodeValue();
+            oldContent = scanComment(commentValue, oldContent, colors);
         }
         //继续遍历子节点
         if (!isFiltered) {
@@ -215,39 +221,100 @@ public class ColorOptimizeAction extends AnAction {
     private StringBuilder scanNode(Node node, StringBuilder oldContent, List<Entity> colors) {
         if (node != null) {
             String value = node.getNodeValue();
-            if (value.length() > 0 &&
-                    !value.contains("@color") &&
-                    !(value.startsWith("@{") && value.endsWith("}")) &&
-                    pattern.matcher(value).find()) {
-                //为空，或者已经有@color 或者是 databinding的样式，就不需要处理，反之需要处理
-                List<Entity> queryList = Lists.newArrayList();
-                queryList.addAll(entityList);
-                queryList.addAll(colors);
-                String targetId = null;
-                //检查当前的value是否已经存在，entityList是已经遍历过文件的列表，strings是当前遍历的文件的列表
-                for (Entity entity : queryList) {
-                    if (entity.getValue().equals(value)) {
-                        //已经存在的value
-                        targetId = entity.getId();
-                        break;
-                    }
+            oldContent = replaceContent(value, oldContent, colors, node.getNodeName());
+        }
+        return oldContent;
+    }
+
+    /**
+     * 扫描node节点
+     *
+     * @param comment
+     * @param oldContent
+     * @param colors
+     * @return
+     */
+    private StringBuilder scanComment(String comment, StringBuilder oldContent, List<Entity> colors) {
+        int valueStart = 0;
+        while (valueStart < comment.length() && valueStart >= 0) {
+            //获取value
+            valueStart = comment.indexOf("\"#", valueStart);
+            if (valueStart == -1) {
+                return oldContent;
+            }
+            StringBuilder valueSb = new StringBuilder();
+            for (int i = valueStart + 1; i < comment.length(); i++) {
+                if (comment.charAt(i) == '"') {
+                    break;
+                } else {
+                    valueSb.append(comment.charAt(i));
                 }
-                if (targetId == null || targetId.length() == 0) {
-                    //不存在
-                    targetId = "color_" + value;
-                    //去除#，不然会报红
-                    targetId = targetId.replace("#", "");
-                    colors.add(new Entity(targetId, value));
+            }
+
+            //获取属性，此处只取 ：= 之间的值
+            int attributeLastIndex = comment.lastIndexOf("=", valueStart);
+            if (attributeLastIndex == -1) {
+                return oldContent;
+            }
+            int attributeStartIndex = comment.lastIndexOf(":", attributeLastIndex);
+            if (attributeStartIndex == -1) {
+                return oldContent;
+            }
+            String attributeStr = comment.substring(attributeStartIndex, attributeLastIndex).trim();
+            if (attributeStr.length() == 0) {
+                return oldContent;
+            }
+
+            //替换
+            oldContent = replaceContent(valueSb.toString(), oldContent, colors, attributeStr);
+            //继续查找下一个值
+            valueStart += valueSb.length() + 1;
+        }
+        return oldContent;
+    }
+
+    /**
+     * 替换内容
+     *
+     * @param value
+     * @param oldContent
+     * @param colors
+     * @param targetItem
+     * @return
+     */
+    private StringBuilder replaceContent(String value, StringBuilder oldContent, List<Entity> colors, String targetItem) {
+        if (value.length() > 0 &&
+                !value.contains("@color") &&
+                !(value.startsWith("@{") && value.endsWith("}")) &&
+                pattern.matcher(value).find()) {
+            //为空，或者已经有@color 或者是 databinding的样式，就不需要处理，反之需要处理
+            List<Entity> queryList = Lists.newArrayList();
+            queryList.addAll(entityList);
+            queryList.addAll(colors);
+            String targetId = null;
+            //检查当前的value是否已经存在，entityList是已经遍历过文件的列表，strings是当前遍历的文件的列表
+            for (Entity entity : queryList) {
+                if (entity.getValue().equals(value)) {
+                    //已经存在的value
+                    targetId = entity.getId();
+                    break;
                 }
-                int index = 0;
-                while (index < oldContent.length() && index >= 0) {
-                    index = Util.getRightIndex(oldContent, value, node.getNodeName(), 0);
-                    if (index != -1) {
-                        //说明找到对应的值 +2 是因为替换的是 "value"，而不是value
-                        oldContent = oldContent.replace(index, index + value.length() + 2, "\"@color/" + targetId + "\"");
-                        //继续查找下一个值
-                        index += value.length();
-                    }
+            }
+            if (targetId == null || targetId.length() == 0) {
+                //不存在
+                targetId = "color_" + value;
+                //去除#，不然会报红
+                targetId = targetId.replace("#", "");
+                colors.add(new Entity(targetId, value));
+            }
+            int index = 0;
+            while (index < oldContent.length() && index >= 0) {
+                index = Util.getRightIndex(oldContent, value, targetItem, 0);
+                if (index != -1) {
+                    //说明找到对应的值 +2 是因为替换的是 "value"，而不是value
+                    oldContent = oldContent.replace(index, index + value.length() + 2, "\"@color/" + targetId + "\"");
+                    //继续查找下一个值
+                    index += value.length();
                 }
             }
         }

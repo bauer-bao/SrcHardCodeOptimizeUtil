@@ -186,6 +186,28 @@ public class StringOptimizeAction extends AnAction {
             //处理hint属性
             targetItem = "android:hint";
             oldContent = scanNode(node, fileName, oldContent, strings, targetItem);
+        } else if (node.getNodeType() == Node.COMMENT_NODE) {
+            /*
+             * 为什么要处理注释中的硬编码？可以换个问题，不处理会有什么影响？
+             * 注释中会存在硬编码的原因，1.纯注释，2.可能还有用的代码，暂时先被注释了，如果没用的代码肯定是选择删除，而不是注释。
+             * 所以如果插件不处理注释，然后开发者再次使用了注释中的代码，那么项目中就依然存在硬编码。
+             * 如果处理了，就算重新使用注释代码，也不会有任何问题，如果真多余了，最多再去资源文件中删除对应的数据即可
+             *
+             * 注释默认一行就是一个comment node
+             * 方案1：补成node的形式，简单，很多情况会爆红，但是不影响整个流程。
+             * 方案2：遍历字符串，算法复杂---【采用方案】
+             */
+            String commentValue = node.getNodeValue();
+            //处理text属性
+            String targetItem = "android:text";
+            if (commentValue.contains(targetItem)) {
+                oldContent = scanComment(commentValue, fileName, oldContent, strings, targetItem);
+            }
+            //处理hint属性
+            targetItem = "android:hint";
+            if (commentValue.contains(targetItem)) {
+                oldContent = scanComment(commentValue, fileName, oldContent, strings, targetItem);
+            }
         }
         //继续遍历子节点
         NodeList children = node.getChildNodes();
@@ -209,36 +231,94 @@ public class StringOptimizeAction extends AnAction {
         Node stringNode = node.getAttributes().getNamedItem(targetItem);
         if (stringNode != null) {
             String value = stringNode.getNodeValue();
-            if (value.length() > 0 &&
-                    !value.contains("@string") &&
-                    !(value.startsWith("@{") && value.endsWith("}"))) {
-                //为空，或者已经有@string 或者是 databinding的样式，就不需要处理，反之需要处理
-                List<Entity> queryList = Lists.newArrayList();
-                queryList.addAll(entityList);
-                queryList.addAll(strings);
-                String targetId = null;
-                //检查当前的value是否已经存在，entityList是已经遍历过文件的列表，strings是当前遍历的文件的列表
-                for (Entity entity : queryList) {
-                    if (entity.getValue().equals(value)) {
-                        //已经存在的value
-                        targetId = entity.getId();
-                        break;
+            oldContent = replaceContent(value, fileName, oldContent, strings, targetItem);
+        }
+        return oldContent;
+    }
+
+    /**
+     * 扫描node节点
+     *
+     * @param comment
+     * @param fileName
+     * @param oldContent
+     * @param strings
+     * @param targetItem
+     * @return
+     */
+    private StringBuilder scanComment(String comment, String fileName, StringBuilder oldContent, List<Entity> strings, String targetItem) {
+        int targetIndex = 0;
+        while (targetIndex < comment.length() && targetIndex >= 0) {
+            targetIndex = comment.indexOf(targetItem, targetIndex);
+            if (targetIndex != -1) {
+                //存在目标属性，开始找对应的value
+                StringBuilder value = new StringBuilder();
+                //获取value开始的index
+                int startIndex = Util.getValueIndex(comment, targetIndex + targetItem.length());
+                if (startIndex != -1) {
+                    for (int i = startIndex; i < comment.length(); i++) {
+                        if (comment.charAt(i) == '"') {
+                            break;
+                        } else {
+                            value.append(comment.charAt(i));
+                        }
+                    }
+                    //成功获取到value
+                    String valueStr = value.toString();
+                    //替换value
+                    oldContent = replaceContent(valueStr, fileName, oldContent, strings, targetItem);
+                    //继续查找下一个值，如果 == 0 说明是空格，但是还是要继续查找下一个值
+                    if (valueStr.length() > 0) {
+                        targetIndex += valueStr.length();
+                    } else {
+                        targetIndex++;
                     }
                 }
-                if (targetId == null || targetId.length() == 0) {
-                    //不存在
-                    targetId = fileName + "_text_" + (index++);
-                    strings.add(new Entity(targetId, value));
+            }
+        }
+        return oldContent;
+    }
+
+    /**
+     * 替换内容
+     *
+     * @param value
+     * @param fileName
+     * @param oldContent
+     * @param strings
+     * @param targetItem
+     * @return
+     */
+    private StringBuilder replaceContent(String value, String fileName, StringBuilder oldContent, List<Entity> strings, String targetItem) {
+        if (value.length() > 0 &&
+                !value.contains("@string") &&
+                !(value.startsWith("@{") && value.endsWith("}"))) {
+            //为空，或者已经有@string 或者是 databinding的样式，就不需要处理，反之需要处理
+            List<Entity> queryList = Lists.newArrayList();
+            queryList.addAll(entityList);
+            queryList.addAll(strings);
+            String targetId = null;
+            //检查当前的value是否已经存在，entityList是已经遍历过文件的列表，strings是当前遍历的文件的列表
+            for (Entity entity : queryList) {
+                if (entity.getValue().equals(value)) {
+                    //已经存在的value
+                    targetId = entity.getId();
+                    break;
                 }
-                int index = 0;
-                while (index < oldContent.length() && index >= 0) {
-                    index = Util.getRightIndex(oldContent, value, targetItem, 0);
-                    if (index != -1) {
-                        //说明找到对应的值 +2 是因为替换的是 "value"，而不是value
-                        oldContent = oldContent.replace(index, index + value.length() + 2, "\"@string/" + targetId + "\"");
-                        //继续查找下一个值
-                        index += value.length();
-                    }
+            }
+            if (targetId == null || targetId.length() == 0) {
+                //不存在
+                targetId = fileName + "_text_" + (index++);
+                strings.add(new Entity(targetId, value));
+            }
+            int index = 0;
+            while (index < oldContent.length() && index >= 0) {
+                index = Util.getRightIndex(oldContent, value, targetItem, 0);
+                if (index != -1) {
+                    //说明找到对应的值 +2 是因为替换的是 "value"，而不是value
+                    oldContent = oldContent.replace(index, index + value.length() + 2, "\"@string/" + targetId + "\"");
+                    //继续查找下一个值
+                    index += value.length();
                 }
             }
         }

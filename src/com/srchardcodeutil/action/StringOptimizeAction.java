@@ -273,6 +273,8 @@ public class StringOptimizeAction extends AnAction {
                     } else {
                         targetIndex++;
                     }
+                } else {
+                    targetIndex++;
                 }
             }
         }

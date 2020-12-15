@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.bauerbao.srchardcodeutil</id>
     <name>XML Hard-code Optimize</name>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <vendor email="351324046@qq.com" url="https://github.com/bauer-bao/SrcHardCodeOptimizeUtil">Bauer</vendor>
 
     <description><![CDATA[
@@ -23,6 +23,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      V1.0.3: Support Android Studio 4.1.<br>
       V1.0.2: Bug fix.<br>
       V1.0.1: String/Color option can support comment code. Values folder will be created if not exist.<br>
       V1.0.0: XML Hard-code Optimize Plugin is the first release version.<br>
@@ -34,9 +35,7 @@
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
-    <!-- uncomment to enable plugin in all products
-    <depends>com.intellij.modules.lang</depends>
-    -->
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->

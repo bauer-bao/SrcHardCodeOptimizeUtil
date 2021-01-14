@@ -1,8 +1,6 @@
 package com.srchardcodeutil.util;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.*;
@@ -203,7 +201,8 @@ public class Util {
      * @param msg
      */
     public static void showError(String msg) {
-        Notifications.Bus.notify(new Notification("XHO", "Optimize Error", msg, NotificationType.ERROR));
+        NotificationGroup notificationGroup = new NotificationGroup("Optimize", NotificationDisplayType.BALLOON, true);
+        Notifications.Bus.notify(notificationGroup.createNotification(msg, NotificationType.ERROR));
     }
 
     /**
@@ -212,6 +211,7 @@ public class Util {
      * @param msg
      */
     public static void showTip(String msg) {
-        Notifications.Bus.notify(new Notification("XHO", "Optimize Finish", msg, NotificationType.INFORMATION));
+        NotificationGroup notificationGroup = new NotificationGroup("Optimize", NotificationDisplayType.BALLOON, true);
+        Notifications.Bus.notify(notificationGroup.createNotification(msg, NotificationType.INFORMATION));
     }
 }

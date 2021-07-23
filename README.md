@@ -36,6 +36,10 @@
 
 ## 更新日志
 
+V1.0.4:
+
+    1.兼容dataBinding中"@={}"的格式
+
 V1.0.3:
     
     1.兼容Android Studio 4.1

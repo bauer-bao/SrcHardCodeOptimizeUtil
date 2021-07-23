@@ -294,7 +294,8 @@ public class StringOptimizeAction extends AnAction {
     private StringBuilder replaceContent(String value, String fileName, StringBuilder oldContent, List<Entity> strings, String targetItem) {
         if (value.length() > 0 &&
                 !value.contains("@string") &&
-                !(value.startsWith("@{") && value.endsWith("}"))) {
+                !(value.startsWith("@{") && value.endsWith("}")) &&
+                !(value.startsWith("@={") && value.endsWith("}"))) {
             //为空，或者已经有@string 或者是 databinding的样式，就不需要处理，反之需要处理
             List<Entity> queryList = Lists.newArrayList();
             queryList.addAll(entityList);

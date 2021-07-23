@@ -286,6 +286,7 @@ public class ColorOptimizeAction extends AnAction {
         if (value.length() > 0 &&
                 !value.contains("@color") &&
                 !(value.startsWith("@{") && value.endsWith("}")) &&
+                !(value.startsWith("@={") && value.endsWith("}")) &&
                 pattern.matcher(value).find()) {
             //为空，或者已经有@color 或者是 databinding的样式，就不需要处理，反之需要处理
             List<Entity> queryList = Lists.newArrayList();

@@ -1,28 +1,31 @@
 <idea-plugin>
     <id>com.bauerbao.srchardcodeutil</id>
-    <name>XML Hard-code Optimize</name>
-    <version>1.0.4</version>
+    <name>XML Hard-Code Optimize</name>
+    <version>1.0.5</version>
     <vendor email="351324046@qq.com" url="https://github.com/bauer-bao/SrcHardCodeOptimizeUtil">Bauer</vendor>
 
     <description><![CDATA[
-    After optimizing the hard codes of strings and colors in res folder, this plugin can generate the resource codes in strings.xml and colors.xml automatically.<br>
+    After optimizing the hard codes of strings/colors and dimens in res folder, this plugin can generate the resource codes in strings.xml/colors.xml and dimens.xml automatically.<br>
     Recommendation: backup your code before use.<br>
-    对老项目中的string和color等硬编码快捷的添加到strings.xml和colors.xml文件中.<br>
+    对老项目中的string、color和dimen等硬编码快捷的添加到strings.xml、colors.xml和dimens.xml文件中.<br>
     建议：使用前先备份代码.<br>
 
     More:<br>
     1.Support res/drawableXXX/layoutXXX folder to execute this plugin.<br>
     2.Support XXX.xml file to execute this plugin.<br>
-    3.For string option, only the android:text and android:hint attributes can be recognized.<br>
+    3.For string option, the android:text and android:hint two attributes can be recognized.<br>
     4.For color option, the value like #xxx/#xxxxxx/#xxxxxxxx can be recognized.<br>
+    5.For dimen option, the value like xxdp/xxsp can be recognized.<br>
     更多：<br>
     1.支持对res/drawableXXX/layoutXXX文件夹执行插件<br>
     2.支持对XXX.xml文件执行插件<br>
     3.如果执行string选项的话，只有android:text和android:hint两个属性可以被识别<br>
     4.如果执行color选项的话，类似于#xxx/#xxxxxx/#xxxxxxxx的值都可以被识别<br>
+    5.如果执行dimen选项的话，类似于xxdp/xxsp的值都可以被识别<br>
     ]]></description>
 
     <change-notes><![CDATA[
+      V1.0.5: Support optimize dimen in xml file. For the three optimizes, the source will not create if it exists in the old file.
       V1.0.4: Support dataBinding format such as "@={}"
       V1.0.3: Support Android Studio 4.1.<br>
       V1.0.2: Bug fix.<br>
@@ -52,6 +55,9 @@
 
             <action id="color-optimize" class="com.srchardcodeutil.action.ColorOptimizeAction" text="Color Optimize"
                     description="Optimize the hard codes to colors.xml"/>
+
+            <action id="dimen-optimize" class="com.srchardcodeutil.action.DimenOptimizeAction" text="Dimen Optimize"
+                    description="Optimize the hard codes to dimens.xml"/>
         </group>
     </actions>
 </idea-plugin>

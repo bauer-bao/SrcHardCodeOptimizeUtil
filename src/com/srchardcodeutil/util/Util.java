@@ -2,9 +2,11 @@ package com.srchardcodeutil.util;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.srchardcodeutil.bean.Entity;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * Created by bauer on 2019/11/25.
@@ -30,15 +32,12 @@ public class Util {
     }
 
     /**
-     * 保存到文件
+     * 保存到文件，会针对已有数据进行去重
      *
      * @param parentFile
-     * @param sb
+     * @param dataList
      */
-    public static void saveToFile(VirtualFile parentFile, StringBuilder sb, boolean isString) {
-        if (sb == null || sb.length() == 0) {
-            return;
-        }
+    public static void saveToFile(VirtualFile parentFile, List<Entity> dataList, String targetFileName) {
         //获取父文件夹，找到string.xml，并且将字段添加到文件
         if (parentFile.getName().equalsIgnoreCase("res")) {
             //如果是res资源，则开始处理
@@ -52,12 +51,13 @@ public class Util {
                     //处理values文件夹
                     boolean exist = false;
                     for (VirtualFile value : valuesChildren) {
-                        if (value.getName().equals(isString ? "strings.xml" : "colors.xml")) {
-                            //找到strings.xml或者colors.xml
+                        if (value.getName().equals(targetFileName)) {
+                            //找到xxx.xml
                             exist = true;
                             try {
                                 //将文件转成string
                                 String content = new String(value.contentsToByteArray(), StandardCharsets.UTF_8);
+                                StringBuilder sb = getStringBuilderFilterDuplicateData(content, dataList, targetFileName);
                                 //替换成最新的string
                                 String result = content.replace("</resources>", sb.toString() + "\n</resources>");
                                 //将内容全部写入文件中
@@ -70,7 +70,8 @@ public class Util {
                     }
                     if (!exist) {
                         //目标文件不存在，新建文件
-                        File file1 = new File(child.getPath(), isString ? "strings.xml" : "colors.xml");
+                        File file1 = new File(child.getPath(), targetFileName);
+                        StringBuilder sb = getStringBuilderFilterDuplicateData(null, dataList, targetFileName);
                         //生成内容
                         String content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n   " + sb.toString() + "\n</resources>";
                         //保存到文件
@@ -84,13 +85,61 @@ public class Util {
                 File valueFile = new File(parentFile.getPath(), "values");
                 valueFile.mkdirs();
                 //新建xml文件
-                File file1 = new File(valueFile.getPath(), isString ? "strings.xml" : "colors.xml");
+                File file1 = new File(valueFile.getPath(), targetFileName);
+                StringBuilder sb = getStringBuilderFilterDuplicateData(null, dataList, targetFileName);
                 //生成内容
                 String content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n   " + sb.toString() + "\n</resources>";
                 //保存到文件
                 saveContentToFile(file1.getPath(), content);
             }
         }
+    }
+
+    /**
+     * 生成最终写入的内容，支持对已有数据去重。因为string命名方式不一样，只有key和value一样，才会被去重
+     *
+     * @param targetContent
+     * @param list
+     * @param targetFileName
+     * @return
+     */
+    private static StringBuilder getStringBuilderFilterDuplicateData(String targetContent, List<Entity> list, String targetFileName) {
+        StringBuilder sb = new StringBuilder();
+        if (list == null) {
+            return sb;
+        }
+        if (targetContent == null) {
+            targetContent = "";
+        }
+        for (Entity entity : list) {
+            StringBuilder insertStr = new StringBuilder();
+            //拼接待插入的数据
+            if (targetFileName.startsWith("dimens")) {
+                insertStr.append("<dimen name=\"")
+                        .append(entity.getValue().endsWith("sp") ? "text_sp_" : "dp_")
+                        .append(entity.getId())
+                        .append("\">")
+                        .append(entity.getValue())
+                        .append("</dimen>");
+            } else if (targetFileName.startsWith("colors")) {
+                insertStr.append("<color name=\"")
+                        .append(entity.getId())
+                        .append("\">")
+                        .append(entity.getValue())
+                        .append("</color>");
+            } else if (targetFileName.startsWith("strings")) {
+                insertStr.append("<string name=\"")
+                        .append(entity.getId())
+                        .append("\">")
+                        .append(entity.getValue())
+                        .append("</string>");
+            }
+            if (!targetContent.contains(insertStr.toString())) {
+                //如果不存在，则添加到sb，反之则不用重复添加
+                sb.append("\n    ").append(insertStr.toString());
+            }
+        }
+        return sb;
     }
 
     /**
@@ -170,8 +219,7 @@ public class Util {
      * @param index
      * @return
      */
-    public static int getValueIndex(String content, int index) {
-        String targetItemStr = "=\"";
+    public static int getValueIndex(String content, String targetItemStr, int index) {
         int targetIndex = 0;
         int resultIndex = -1;
         for (int i = index; i < content.length(); i++) {

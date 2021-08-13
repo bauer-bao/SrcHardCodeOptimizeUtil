@@ -24,6 +24,7 @@ import java.util.List;
  * Created by bauer on 2019/11/25.
  */
 public class StringOptimizeAction extends AnAction {
+    private static final String FILE_NAME = "strings.xml";
     /**
      * 记录已经遍历的entity列表
      */
@@ -56,7 +57,6 @@ public class StringOptimizeAction extends AnAction {
             }
         }
 
-        StringBuilder sb = new StringBuilder();
         entityList = Lists.newArrayList();
         if (file.isDirectory()) {
             //获取全部子文件
@@ -69,27 +69,27 @@ public class StringOptimizeAction extends AnAction {
                         VirtualFile[] children2 = child.getChildren();
                         for (VirtualFile child2 : children2) {
                             //说明对res文件夹进行的操作
-                            scanChildFile(child2, sb);
+                            scanChildFile(child2);
                         }
                     }
                 } else {
                     //说明对layout的单文件进行的操作
-                    scanChildFile(child, sb);
+                    scanChildFile(child);
                 }
             }
             //将对应的资源写入文件
             if (file.getName().equals("res")) {
                 //当前目录就是res，则不需要父文件
-                Util.saveToFile(file, sb, true);
+                Util.saveToFile(file, entityList, FILE_NAME);
             } else {
                 //是res的子目录，需要父文件
-                Util.saveToFile(parentFile, sb, true);
+                Util.saveToFile(parentFile, entityList, FILE_NAME);
             }
         } else {
             //单个文件
-            scanChildFile(file, sb);
+            scanChildFile(file);
             //将对应的资源写入文件
-            Util.saveToFile(parentFile.getParent(), sb, true);
+            Util.saveToFile(parentFile.getParent(), entityList, FILE_NAME);
         }
         //刷新整个工程的文件
         e.getActionManager().getAction(IdeActions.ACTION_SYNCHRONIZE).actionPerformed(e);
@@ -100,9 +100,8 @@ public class StringOptimizeAction extends AnAction {
      * 扫描文件
      *
      * @param file
-     * @param sb
      */
-    private void scanChildFile(VirtualFile file, StringBuilder sb) {
+    private void scanChildFile(VirtualFile file) {
         //重置索引
         index = 0;
         //获取后缀名
@@ -130,13 +129,6 @@ public class StringOptimizeAction extends AnAction {
             List<Entity> result = extraEntity(is, file.getNameWithoutExtension().toLowerCase(), oldContent);
             //保存到全部文件的资源列表中
             entityList.addAll(result);
-            for (Entity string : result) {
-                sb.append("\n    <string name=\"")
-                        .append(string.getId())
-                        .append("\">")
-                        .append(string.getValue())
-                        .append("</string>");
-            }
             //更新文件
             Util.saveContentToFile(file.getPath(), oldContent.toString());
         } catch (IOException e1) {
@@ -254,7 +246,7 @@ public class StringOptimizeAction extends AnAction {
                 //存在目标属性，开始找对应的value
                 StringBuilder value = new StringBuilder();
                 //获取value开始的index
-                int startIndex = Util.getValueIndex(comment, targetIndex + targetItem.length());
+                int startIndex = Util.getValueIndex(comment, "=\"", targetIndex + targetItem.length());
                 if (startIndex != -1) {
                     for (int i = startIndex; i < comment.length(); i++) {
                         if (comment.charAt(i) == '"') {

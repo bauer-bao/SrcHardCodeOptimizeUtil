@@ -18,20 +18,19 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
- * layout和drawable文件夹转成colors
- * Created by bauer on 2019/11/25.
+ * layout和drawable文件夹转成dimens
+ * Created by bauer on 2021/08/09.
  */
-public class ColorOptimizeAction extends AnAction {
-    private static final String FILE_NAME = "colors.xml";
+public class DimenOptimizeAction extends AnAction {
+    private static final String FILE_NAME = "dimens.xml";
     /**
      * 记录已经遍历的entity列表
      */
     private List<Entity> entityList;
-    private Pattern pattern = Pattern.compile("^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$");
 
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -129,6 +128,29 @@ public class ColorOptimizeAction extends AnAction {
             //获取一个文件中的全部新增的资源列表
             List<Entity> result = extraEntity(is, oldContent);
             //保存到全部文件的资源列表中
+            result.sort(new Comparator<Entity>() {
+                @Override
+                public int compare(Entity entity, Entity t1) {
+                    if (entity == null || t1 == null) {
+                        return 1;
+                    }
+                    try {
+                        if ((t1.getValue().endsWith("sp") && entity.getValue().endsWith("sp")) ||
+                                (t1.getValue().endsWith("dp") && entity.getValue().endsWith("dp"))) {
+                            if (Double.parseDouble(entity.getId()) > Double.parseDouble(t1.getId())) {
+                                return 1;
+                            } else {
+                                return -1;
+                            }
+                        } else if (t1.getValue().endsWith("sp")) {
+                            return -1;
+                        }
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                    return 1;
+                }
+            });
             entityList.addAll(result);
             //更新文件
             Util.saveContentToFile(file.getPath(), oldContent.toString());
@@ -153,9 +175,9 @@ public class ColorOptimizeAction extends AnAction {
      * @return
      */
     private List<Entity> extraEntity(InputStream is, StringBuilder oldContent) {
-        List<Entity> colors = Lists.newArrayList();
+        List<Entity> dimens = Lists.newArrayList();
         try {
-            return generateColors(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), colors, oldContent);
+            return generateDimens(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), dimens, oldContent);
         } catch (SAXException | ParserConfigurationException | IOException e) {
             throw new RuntimeException(e);
         }
@@ -165,11 +187,11 @@ public class ColorOptimizeAction extends AnAction {
      * 遍历整个文件
      *
      * @param node
-     * @param colors
+     * @param dimens
      * @param oldContent
      * @return
      */
-    private List<Entity> generateColors(Node node, List<Entity> colors, StringBuilder oldContent) {
+    private List<Entity> generateDimens(Node node, List<Entity> dimens, StringBuilder oldContent) {
         boolean isFiltered = false;
         if (node.getNodeType() == Node.ELEMENT_NODE) {
             String name = node.getNodeName();
@@ -179,7 +201,7 @@ public class ColorOptimizeAction extends AnAction {
                 //遍历node下的全部属性
                 for (int i = 0; i < namedNodeMap.getLength(); i++) {
                     Node currentNode = namedNodeMap.item(i);
-                    oldContent = scanNode(currentNode, oldContent, colors);
+                    oldContent = scanNode(currentNode, oldContent, dimens);
                 }
             } else {
                 isFiltered = true;
@@ -189,17 +211,17 @@ public class ColorOptimizeAction extends AnAction {
              * 处理方式和string不同，1.获取value，2.获取：=之间的值作为属性，3.替换
              */
             String commentValue = node.getNodeValue();
-            oldContent = scanComment(commentValue, oldContent, colors);
+            oldContent = scanComment(commentValue, oldContent, dimens);
         }
         //继续遍历子节点
         if (!isFiltered) {
             //如果没有被过滤，则继续遍历子节点
             NodeList children = node.getChildNodes();
             for (int j = 0; j < children.getLength(); j++) {
-                generateColors(children.item(j), colors, oldContent);
+                generateDimens(children.item(j), dimens, oldContent);
             }
         }
-        return colors;
+        return dimens;
     }
 
     /**
@@ -207,13 +229,13 @@ public class ColorOptimizeAction extends AnAction {
      *
      * @param node
      * @param oldContent
-     * @param colors
+     * @param dimens
      * @return
      */
-    private StringBuilder scanNode(Node node, StringBuilder oldContent, List<Entity> colors) {
+    private StringBuilder scanNode(Node node, StringBuilder oldContent, List<Entity> dimens) {
         if (node != null) {
             String value = node.getNodeValue();
-            oldContent = replaceContent(value, oldContent, colors, node.getNodeName());
+            oldContent = replaceContent(value, oldContent, dimens, node.getNodeName());
         }
         return oldContent;
     }
@@ -223,26 +245,17 @@ public class ColorOptimizeAction extends AnAction {
      *
      * @param comment
      * @param oldContent
-     * @param colors
+     * @param dimens
      * @return
      */
-    private StringBuilder scanComment(String comment, StringBuilder oldContent, List<Entity> colors) {
+    private StringBuilder scanComment(String comment, StringBuilder oldContent, List<Entity> dimens) {
         int valueStart = 0;
         while (valueStart < comment.length() && valueStart >= 0) {
-            //获取value
-            valueStart = comment.indexOf("\"#", valueStart);
+            //确定dp或者sp的位置
+            valueStart = comment.indexOf("p\"", valueStart);
             if (valueStart == -1) {
                 return oldContent;
             }
-            StringBuilder valueSb = new StringBuilder();
-            for (int i = valueStart + 1; i < comment.length(); i++) {
-                if (comment.charAt(i) == '"') {
-                    break;
-                } else {
-                    valueSb.append(comment.charAt(i));
-                }
-            }
-
             //获取属性，此处只取 ：= 之间的值
             int attributeLastIndex = comment.lastIndexOf("=", valueStart);
             if (attributeLastIndex == -1) {
@@ -256,9 +269,18 @@ public class ColorOptimizeAction extends AnAction {
             if (attributeStr.length() == 0) {
                 return oldContent;
             }
-
+            //根据数据结尾，获取真正的value开始位置
+            valueStart = comment.indexOf("\"", attributeLastIndex);
+            StringBuilder valueSb = new StringBuilder();
+            for (int i = valueStart + 1; i < comment.length(); i++) {
+                if (comment.charAt(i) == '"') {
+                    break;
+                } else {
+                    valueSb.append(comment.charAt(i));
+                }
+            }
             //替换
-            oldContent = replaceContent(valueSb.toString(), oldContent, colors, attributeStr);
+            oldContent = replaceContent(valueSb.toString(), oldContent, dimens, attributeStr);
             //继续查找下一个值
             valueStart += valueSb.length() + 1;
         }
@@ -266,28 +288,28 @@ public class ColorOptimizeAction extends AnAction {
     }
 
     /**
-     * 替换内容
+     * 替换内容，value上加trim，是保证存入的值没有空格；不加trim，是保证替换的时候包括空格整体替换
      *
      * @param value
      * @param oldContent
-     * @param colors
+     * @param dimens
      * @param targetItem
      * @return
      */
-    private StringBuilder replaceContent(String value, StringBuilder oldContent, List<Entity> colors, String targetItem) {
-        if (value.length() > 0 &&
-                !value.contains("@color") &&
+    private StringBuilder replaceContent(String value, StringBuilder oldContent, List<Entity> dimens, String targetItem) {
+        if (value.trim().length() > 0 &&
+                (value.endsWith("sp") || value.endsWith("dp")) &&
+                !value.contains("@dimen") &&
                 !(value.startsWith("@{") && value.endsWith("}")) &&
-                !(value.startsWith("@={") && value.endsWith("}")) &&
-                pattern.matcher(value).find()) {
-            //为空，或者已经有@color 或者是 databinding的样式，就不需要处理，反之需要处理
+                !(value.startsWith("@={") && value.endsWith("}"))) {
+            //为空，或者已经有@dimen 或者是 databinding的样式，就不需要处理，反之需要处理
             List<Entity> queryList = Lists.newArrayList();
             queryList.addAll(entityList);
-            queryList.addAll(colors);
+            queryList.addAll(dimens);
             String targetId = null;
             //检查当前的value是否已经存在，entityList是已经遍历过文件的列表，strings是当前遍历的文件的列表
             for (Entity entity : queryList) {
-                if (entity.getValue().equals(value)) {
+                if (entity.getValue().equals(value.trim())) {
                     //已经存在的value
                     targetId = entity.getId();
                     break;
@@ -295,17 +317,23 @@ public class ColorOptimizeAction extends AnAction {
             }
             if (targetId == null || targetId.length() == 0) {
                 //不存在
-                targetId = "color_" + value;
-                //去除#，不然会报红
-                targetId = targetId.replace("#", "");
-                colors.add(new Entity(targetId, value));
+                targetId = value.replaceAll("dp", "").replaceAll("sp", "").trim();
+                dimens.add(new Entity(targetId, value.trim()));
             }
             int index = 0;
             while (index < oldContent.length() && index >= 0) {
                 index = Util.getRightIndex(oldContent, value, targetItem, 0);
                 if (index != -1) {
+                    String placeStr;
+                    if (value.endsWith("sp")) {
+                        //sp
+                        placeStr = "\"@dimen/text_sp_";
+                    } else {
+                        //dp
+                        placeStr = "\"@dimen/dp_";
+                    }
                     //说明找到对应的值 +2 是因为替换的是 "value"，而不是value
-                    oldContent = oldContent.replace(index, index + value.length() + 2, "\"@color/" + targetId + "\"");
+                    oldContent = oldContent.replace(index, index + value.length() + 2, placeStr + targetId + "\"");
                     //继续查找下一个值
                     index += value.length();
                 }

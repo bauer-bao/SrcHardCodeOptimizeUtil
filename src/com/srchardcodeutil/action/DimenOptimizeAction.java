@@ -1,6 +1,5 @@
 package com.srchardcodeutil.action;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -18,6 +17,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -59,7 +59,7 @@ public class DimenOptimizeAction extends AnAction {
             }
         }
 
-        entityList = Lists.newArrayList();
+        entityList = new ArrayList<>();
         if (file.isDirectory()) {
             //获取全部子文件
             VirtualFile[] children = file.getChildren();
@@ -175,7 +175,7 @@ public class DimenOptimizeAction extends AnAction {
      * @return
      */
     private List<Entity> extraEntity(InputStream is, StringBuilder oldContent) {
-        List<Entity> dimens = Lists.newArrayList();
+        List<Entity> dimens = new ArrayList<>();
         try {
             return generateDimens(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), dimens, oldContent);
         } catch (SAXException | ParserConfigurationException | IOException e) {
@@ -303,7 +303,7 @@ public class DimenOptimizeAction extends AnAction {
                 !(value.startsWith("@{") && value.endsWith("}")) &&
                 !(value.startsWith("@={") && value.endsWith("}"))) {
             //为空，或者已经有@dimen 或者是 databinding的样式，就不需要处理，反之需要处理
-            List<Entity> queryList = Lists.newArrayList();
+            List<Entity> queryList = new ArrayList<>();
             queryList.addAll(entityList);
             queryList.addAll(dimens);
             String targetId = null;

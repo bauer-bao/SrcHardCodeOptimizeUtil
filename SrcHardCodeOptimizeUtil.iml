@@ -9,6 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="com.google.collections:google-collections:0.9" level="project" />
+    <!--<orderEntry type="library" name="com.google.collections:google-collections:0.9" level="project" />-->
   </component>
 </module>

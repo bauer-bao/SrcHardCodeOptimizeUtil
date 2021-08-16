@@ -1,6 +1,5 @@
 package com.srchardcodeutil.action;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -17,6 +16,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -57,7 +57,7 @@ public class StringOptimizeAction extends AnAction {
             }
         }
 
-        entityList = Lists.newArrayList();
+        entityList = new ArrayList<>();
         if (file.isDirectory()) {
             //获取全部子文件
             VirtualFile[] children = file.getChildren();
@@ -153,7 +153,7 @@ public class StringOptimizeAction extends AnAction {
      * @return
      */
     private List<Entity> extraEntity(InputStream is, String fileName, StringBuilder oldContent) {
-        List<Entity> strings = Lists.newArrayList();
+        List<Entity> strings = new ArrayList<>();
         try {
             return generateStrings(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), strings, fileName, oldContent);
         } catch (SAXException | ParserConfigurationException | IOException e) {
@@ -289,7 +289,7 @@ public class StringOptimizeAction extends AnAction {
                 !(value.startsWith("@{") && value.endsWith("}")) &&
                 !(value.startsWith("@={") && value.endsWith("}"))) {
             //为空，或者已经有@string 或者是 databinding的样式，就不需要处理，反之需要处理
-            List<Entity> queryList = Lists.newArrayList();
+            List<Entity> queryList = new ArrayList<>();
             queryList.addAll(entityList);
             queryList.addAll(strings);
             String targetId = null;

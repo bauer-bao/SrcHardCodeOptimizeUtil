@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.bauerbao.srchardcodeutil</id>
     <name>XML Hard-Code Optimize</name>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <vendor email="351324046@qq.com" url="https://github.com/bauer-bao/SrcHardCodeOptimizeUtil">Bauer</vendor>
 
     <description><![CDATA[
@@ -25,8 +25,9 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      V1.0.5: Support optimize dimen in xml file. For the three optimizes, the source will not create if it exists in the old file.
-      V1.0.4: Support dataBinding format such as "@={}"
+      V1.0.6: remove third-part jar.<br>
+      V1.0.5: Support optimize dimen in xml file. For the three optimizes, the source will not create if it exists in the old file.<br>
+      V1.0.4: Support dataBinding format such as "@={}".<br>
       V1.0.3: Support Android Studio 4.1.<br>
       V1.0.2: Bug fix.<br>
       V1.0.1: String/Color option can support comment code. Values folder will be created if not exist.<br>

@@ -12,20 +12,21 @@
 
     More:<br>
     1.Support res/drawableXXX/layoutXXX folder to execute this plugin.<br>
-    2.Support XXX.xml file to execute this plugin.<br>
+    2.For the single file, you can execute this plugin via right click the XXX.xml file in file list / the edit area / file name tab area.<br>
     3.For string option, the android:text and android:hint two attributes can be recognized.<br>
     4.For color option, the value like #xxx/#xxxxxx/#xxxxxxxx can be recognized.<br>
     5.For dimen option, the value like xxdp/xxsp can be recognized.<br>
     更多：<br>
     1.支持对res/drawableXXX/layoutXXX文件夹执行插件<br>
-    2.支持对XXX.xml文件执行插件<br>
+    2.对于单个文件，可以通过右击XXX.xml文件/编辑区域/文件名选项卡区域执行插件<br>
     3.如果执行string选项的话，只有android:text和android:hint两个属性可以被识别<br>
     4.如果执行color选项的话，类似于#xxx/#xxxxxx/#xxxxxxxx的值都可以被识别<br>
     5.如果执行dimen选项的话，类似于xxdp/xxsp的值都可以被识别<br>
     ]]></description>
 
     <change-notes><![CDATA[
-      V1.0.6: remove third-part jar.<br>
+      V1.0.6: Remove third-part jar.<br>
+              Support right click file edit area and file tab area to use this plugin.<br>
       V1.0.5: Support optimize dimen in xml file. For the three optimizes, the source will not create if it exists in the old file.<br>
       V1.0.4: Support dataBinding format such as "@={}".<br>
       V1.0.3: Support Android Studio 4.1.<br>
@@ -49,6 +50,11 @@
     <actions>
         <group id="xml-hard-code-optimize" text="Optimize Hard Code" popup="true"
                description="Optimize the hard codes to strings.xml or colors.xml">
+            <!-- 文件编辑区域右击 -->
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <!-- 文件顶部tab区域右击 -->
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+            <!-- project工程区域右击 -->
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
 
             <action id="string-optimize" class="com.srchardcodeutil.action.StringOptimizeAction" text="String Optimize"
